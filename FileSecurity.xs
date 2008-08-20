@@ -1,14 +1,3 @@
-/* FileSecurity.cpp
- * By Monte Mitzelfelt, monte@conchas.nm.org
- * Larry Wall's Artistic License applies to all related Perl
- *  and C code for this module
- * Thanks to the guys at ActiveWare!
- * v0.66
- *
- * minor misc hacks by Gurusamy Sarathy <gsar@cpan.org>
- *
- */
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winbase.h>
@@ -95,8 +84,6 @@ static char *szRights[] =
   "GENERIC_EXECUTE", "GENERIC_ALL",
   "R", "READ", "C", "CHANGE", "A", "ADD", "F", "FULL", NULL
 } ;
-
-static char *szLocalLookup[] = { "BUILTIN", "NT AUTHORITY", NULL } ;
 
 static long constant( char *name ) {
     int i;
@@ -372,11 +359,11 @@ Set(filename, hv)
 	    PACL pACLNew = NULL;
 	    PACCESS_ALLOWED_ACE pAllAce;
 	    PSECURITY_DESCRIPTOR pSD = NULL; 
-	    DWORD cbACL = 1024, i; 
+	    DWORD cbACL = 1024; 
 	    PSID pSID = NULL; 
 	    DWORD cbSID = 1024; 
 	    ACCESS_MASK AccountRights;
-	    LPSTR    lpszAccount, lpszDomain, lpszServer, lpszTemp;
+	    LPSTR    lpszAccount, lpszDomain;
 	    DWORD cchDomainName = 80, tries; 
 	    PSID_NAME_USE psnuType = NULL; 
 	    I32 AccountLen;
@@ -450,24 +437,7 @@ Set(filename, hv)
 		cbSID = 1024 ;
 		cchDomainName = 80 ;
 
-		if ( lpszTemp = strchr( lpszAccount, '\\' ) ) {
-		    lpszServer = lpszAccount ;
-		    *lpszTemp = '\0' ;
-		    lpszAccount = lpszTemp + 1 ;
-		} else {
-		    lpszServer = NULL ;
-		}
-
-		if ( lpszServer != NULL ) {
-		    for ( i = 0; szLocalLookup[i] != NULL; i++ ) {
-			if ( stricmp( szLocalLookup[i], lpszServer ) == 0 ) {
-			    lpszServer = NULL ;
-			    break ;
-			}
-		    }
-		}
-
-                bResult = LookupAccountNameA((LPCSTR) lpszServer,
+                bResult = LookupAccountNameA(NULL,
                                              (LPCSTR) lpszAccount,
                                              pSID,
                                              &cbSID,
@@ -476,7 +446,7 @@ Set(filename, hv)
                                              psnuType);
 
 		if (!bResult) { 
-		    printf( "%s\\%s\n", lpszServer ? lpszServer : "", lpszAccount ) ;
+		    printf( "%s\n", lpszAccount ) ;
 		    ErrorHandler( "LookupAccountName"); 
 		    goto SetCleanup; 
 		}
